@@ -5,15 +5,11 @@ describe('OrangeHRMe2e', () => {
   const adminPass = "admin123";
   const empData = "employeeData.json";
 
-  function generatePass() {
-    const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+';
-    let password = '';
-    for (let i = 0; i < 12; i++) {
-      password += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    return password;
-  }
-
+  const generatePass = (length = 12) => 
+    Array.from({ length }, () => 
+      'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+'.charAt(Math.floor(Math.random() * 64))
+    ).join('');
+  
   before(() => {
     cy.visit('/');
     cy.title().should("eq", "OrangeHRM");
