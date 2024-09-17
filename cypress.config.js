@@ -7,7 +7,7 @@ module.exports = defineConfig({
     watchForFileChanges:false,
     setupNodeEvents(on, config) {
       config.specPattern = [
-        'cypress/e2e/OrangeHRMe2e.cy.js', 
+        'cypress/e2e/OrangeHRM*.cy.js', 
       ]
       return config;
     },
