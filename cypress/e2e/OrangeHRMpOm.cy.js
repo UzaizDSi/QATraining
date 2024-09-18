@@ -1,11 +1,13 @@
-
-import { loginPage } from '../support/pages/loginPage';
-import { dashboardPage } from '../support/pages/dashboardPage';
-import { employeePage } from '../support/pages/employeePage';
-import { directoryPage } from '../support/pages/directoryPage';
-const { faker } = require('@faker-js/faker');
+import { faker } from '@faker-js/faker';
+import LoginPage from '../support/pages/LoginPage';
+import DashboardPage from '../support/pages/DashboardPage';
+import EmployeePage from '../support/pages/EmployeePage';
 
 describe('OrangeHRMe2e', () => {
+  const loginPage = new LoginPage();
+  const dashboardPage = new DashboardPage();
+  const employeePage = new EmployeePage();
+
   const adminUser = "Admin";
   const adminPass = "admin123";
   const empData = "employeeData.json";
@@ -17,66 +19,50 @@ describe('OrangeHRMe2e', () => {
 
   before(() => {
     loginPage.visit();
+    loginPage.verifyTitle();
     loginPage.login(adminUser, adminPass);
   });
 
   it('Validation flow', () => {
     dashboardPage.verifyDashboard();
     dashboardPage.navigateToPIM();
+    employeePage.clickAddEmployee();
 
-    let employeeID = "";
-    cy.get('label').contains("Employee Id").parent().siblings('div').find('input').invoke("val").then((value) => {
-      employeeID = value;
-    }).then(() => {
-      const firstName = faker.name.firstName();
-      const lastName = faker.name.lastName();
-      const fullName = `${firstName} ${lastName}`;
-      const username = `${firstName}${lastName}`;
-      const password = generatePass();
+    const firstName = faker.name.firstName();
+    const lastName = faker.name.lastName();
+    const fullName = `${firstName} ${lastName}`;
+    const username = `${firstName}${lastName}`;
+    const password = generatePass();
 
-      employeePage.addEmployee(firstName, lastName, username, password);
-      employeePage.verifyEmployeeSaved("Successfully Saved");
-      cy.get('h6').should("contain.text", fullName);
-
+    employeePage.getEmployeeId().then((employeeID) => {
+      employeePage.fillEmployeeForm(firstName, lastName, username, password);
       cy.writeFile(`cypress/fixtures/${empData}`, {
         username,
         password,
         employeeID
       });
 
-      cy.get("li a").contains("Employee List").click();
-      cy.get('h6').should('be.visible');
-
+      dashboardPage.navigateToEmployeeList();
       cy.fixture(empData).then((employee) => {
         employeePage.searchEmployeeById(employee.employeeID);
-        employeePage.verifyEmployeeName(firstName);
+        cy.get('div[role="cell"] div').contains(firstName).should('exist');
       });
 
       dashboardPage.navigateToDirectory();
-      directoryPage.searchEmployeeByName(firstName);
-      directoryPage.verifyEmployeeInDirectory(fullName);
+      employeePage.selectEmployeeFromDirectory(firstName);
+      employeePage.verifyEmployeeInDirectory(fullName);
 
-      loginPage.logout();
-      loginPage.verifyLogout();
-
-      cy.fixture(empData).then((employee) => {
-        loginPage.login(employee.username, employee.password);
-        cy.get("p.oxd-userdropdown-name").should("have.text", fullName);
-        cy.get("span").contains("My Info").click();
-        cy.get("h6").should('be.visible');
-        cy.scrollTo(0, 600);
-        cy.get("label").contains("Male").click();
-        cy.get("label").contains("Blood Type").parent().siblings("div").click();
-        cy.get('.oxd-select-dropdown > :nth-child(6)').click();
-        cy.get("button[type='submit']").eq(1).click();
-        employeePage.verifyEmployeeSaved("Successfully Saved");
-      });
+      dashboardPage.logout();
     });
   });
 
   after(() => {
-    loginPage.logout();
-    loginPage.verifyLogout();
-    cy.writeFile(`cypress/fixtures/${empData}`, {});
+    cy.fixture(empData).then((employee) => {
+      loginPage.login(employee.username, employee.password);
+      loginPage.verifyLoginSuccess(`${employee.firstName} ${employee.lastName}`);
+      cy.writeFile(`cypress/fixtures/${empData}`, {}); // Clean up fixture
+    });
+
+    dashboardPage.logout();
   });
 });

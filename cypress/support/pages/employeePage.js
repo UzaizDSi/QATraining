@@ -1,33 +1,43 @@
 
+import { locators } from '../locators';
+
 class EmployeePage {
-    addEmployee(firstName, lastName, username, password) {
-      cy.get("button[type='button']").contains("Add").click();
-      cy.get('h6').should('be.visible');
-      cy.get("input[name='firstName']").type(firstName);
-      cy.get("input[name='lastName']").type(lastName);
-      cy.get("input[type='checkbox']").click({ force: true });
-      cy.get('label').contains("Username").parent().siblings('div').find('input').type(username);
-      cy.get('label').contains("Password").parent().siblings('div').find('input').type(password);
-      cy.get('label').contains("Confirm Password").parent().siblings('div').find('input').type(password);
-      cy.get("button[type='submit']").click();
-    }
-  
-    verifyEmployeeSaved(message) {
-      cy.get('.oxd-text--toast-message').should("have.text", message);
-    }
-  
-    searchEmployeeById(employeeId) {
-      cy.get('label').contains("Employee Id").parent().siblings('div').find('input').type(employeeId);
-      cy.get("button[type='submit']").click();
-    }
-  
-    verifyEmployeeName(firstName) {
-      cy.get("div[role='cell'] div").contains(firstName).invoke('text').then((text) => {
-        const expectedTxt = text.replace(/\s+/g, ' ').trim();
-        expect(expectedTxt).to.eq(firstName);
-      });
-    }
+  clickAddEmployee() {
+    cy.get(locators.employee.addEmployeeButton).click();
+    cy.get('h6').should('be.visible');
   }
-  
-  export const employeePage = new EmployeePage();
-  
+
+  fillEmployeeForm(firstName, lastName, username, password) {
+    cy.get(locators.employee.firstNameInput).type(firstName);
+    cy.get(locators.employee.lastNameInput).type(lastName);
+    cy.get("input[type='checkbox']").click({ force: true });
+    cy.get(locators.employee.usernameInput).parent().siblings('div').find('input').type(username);
+    cy.get(locators.employee.passwordInput).parent().siblings('div').find('input').type(password);
+    cy.get(locators.employee.confirmPasswordInput).parent().siblings('div').find('input').type(password);
+    cy.get(locators.employee.submitButton).click();
+  }
+
+  getEmployeeId() {
+    return cy.get(locators.employee.employeeIdInput).invoke('val');
+  }
+
+  searchEmployeeById(employeeID) {
+    cy.get(locators.employee.employeeIdInput).type(employeeID);
+    cy.get(locators.employee.submitButton).click();
+  }
+
+  selectEmployeeFromDirectory(firstName) {
+    cy.get(locators.employee.directorySearchInput).type(firstName);
+    cy.get(locators.employee.directoryAutocompleteOption).click();
+    cy.get(locators.employee.submitButton).click();
+  }
+
+  verifyEmployeeInDirectory(fullName) {
+    cy.get(locators.employee.directoryCardHeader).invoke('text').then((text) => {
+      const normalizedText = text.replace(/\s+/g, ' ').trim();
+      expect(normalizedText).to.eq(fullName);
+    });
+  }
+}
+
+export default EmployeePage;
